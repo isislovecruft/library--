@@ -1,0 +1,165 @@
+User Experience Story:
+
+1. User obtains invite token; enters it into Tor Launcher
+2. Tor Launcher spends the invite token by sending it to BridgeDB and in return,
+   obtains an initial set of k bridges in a "BridgeSet descriptor" defined below.
+3. Tor Launcher waits T_0 days and then submits the BridgeSet descriptor
+   to BridgeDB
+   - For each unblocked bridge in the BridgeSet descriptor, the user gets
+     credits as specified below
+4. Tor Launcher can spend the credits for more bridges, or ask the user if
+   they would like to spend extras to get another BridgeDB invite token
+
+
+I. Data Format Specifications
+The BridgeSet descriptor is a signed document obtained from BridgeDB. It
+contains all of the state required to verify honest client behavior.
+
+The format of this descriptor is formatted as a JSON object with an 
+appended, detatched signature as follows:
+  {
+      "Bridges" : 
+       [
+            {
+               "BridgeLine" : BridgeLine,
+               "TimeStamp" : TimeStamp,
+               "CreditsEarned" : INT
+            },
+            ...
+       ],
+       "IssuedTime" : TimeStamp,
+       "TotalUnspentCredits" : INT
+  } NL
+  Signature NL
+
+  BridgeLine := <Bridge line from BridgeDB>
+  TimeStamp := INT
+  NumCredits := INT
+  Signature := Detatached signature over all previous fields
+
+Example:
+
+{'Bridges': [{'BridgeLine': '1.2.3.4:6666 obfs3 adc83b19e793491b1c6ea0fd8b46cd9f32e592fc',
+   'CreditsEarned': 5,
+   'Timestamp': 1382078292.864117},
+  {'BridgeLine': '6.6.6.6:1234 d929c82d2ee727ccbea9c50c669a71075249899f',
+   'CreditsEarned': 5,
+   'Timestamp': 1382078292.864117}],
+ 'TotalUnspentCredits': 10}
+ 
+
+BridgeDB-side Data structures:
+ Double-Spending protection:
+   1. A database of hashes of BridgeSet descriptors that have received invite
+      tokens or bridge credits
+   2. A Bloom filter for the BridgeSet hashes
+   3. A database of hashes of blind signed tokens
+   4. A Bloom filter for the invite hashes
+
+BridgetSet-based credit allocation:
+
+ Each user is initially allocated k=3 bridges, each one is timestamped with
+ the time they were awarded.
+
+ Credits will be awarded by bridgedb upon submission of a BridgeSet
+ descriptor with unblocked bridges that have been in use for at least T_0
+ units of time.
+
+ Once per day, Tor Launcher will submit its current BridgeSet descriptor to
+ BridgeDB.
+
+ For each eligible bridge in the BridgeSet desciptor, BridgeDB:
+   0. Verifies that the "IssuedTime" is within the last 6 months.
+   1. Computes t = min(BridgeBlockTime, now()) - TimeStamp
+   2. Increments the CreditsEarned field for that bridge as well as the total
+      TotalUnspentCredits field by phi_i:
+      If t < T_0:
+        phi_i = 0
+      If T_0 < t < T_1:
+        phi_i = (Timestamp - T_0)*rho
+      If t > T_1:
+        phi_i = (T_1 - T_0)*rho
+   3. Records the hash of the previous descriptor in its "spent" trie and 
+      corresponding Bloom filter (to avoid double spending/cloning)
+   4. Updates the "IssuedTime" field with the current time.
+   5. Signs and sends the new BridgetSet descriptor back to Tor Launcher
+
+ The maximum number of TotalUnspentCredits is capped at max(k*phi^-1,Phi_theta).
+ The maximum number of CreditsEarned per bridge is also capped at this value.
+   XXX: RBridge does not specify cap values?
+
+ The threshhold and credit constants are calculated as documented in 4.3.1 of
+ http://www-users.cs.umn.edu/~hopper/rbridge_ndss13.pdf
+ 
+ Entries in the BridgeSet hash history database that are older than 6 months can be purged. 
+ During this purge step, the corresponding Bloom filter must be rebuilt.
+
+
+Spending Bridge Credits:
+
+ If Tor Launcher detects that the user's reachable bridges has dropped below
+ a threshhold, it then spends any tokens it has to get more bridges. 
+
+ For each bridge that BridgeDB confirms is blocked that the user wants to replace,
+ BridgeDB decrements phi^- tokens from the "TotalUnspentCredits" line and
+ issues a new bridge. The whole descriptor is re-created, removing the blocked
+ bridge and adding the new one, and the previous descriptor hash is recorded
+ in the "spent" trie.
+
+Invite Token Creation:
+
+ Once Phi_theta TotalUnspentCredits have been accumulated in the descriptor, 
+ the user is eligible to convert XXX unspent bridge credits into an invite token
+ to give to friends.
+   XXX: Do you spend k*phi^- or do you spend Phi_theta
+
+ To allow invite tokens to be spent by other users without linking them to the
+ recipient, we blind them using a RSA keypair (e, d) mod N in BridgeDB.
+
+ Based on slides 7-8 of http://www.ee.tamu.edu/~reddy/ee689_06/ecash.pdf:
+
+   For each eligible pending invite token: 
+     Tor Launcher:
+       - creates random x and r
+       - computes s = (r^e * Hash(x)) mod N
+       - sends s and its current BridgeSet descriptor to BridgeDB
+     BridgeDB:
+       - computes t = s^d mod N
+       - decrements the TotalUnspentCredits by XXX and resigns the descriptor
+       - sends t and the new BridgeSet to Tor Launcher
+     Tor Launcher:
+       - computes y = (t * r^-1) mod N
+       - stores (x,y) as the invite token
+       - stores its new BridgeSet descriptor
+
+   (x,y) is a blind-signed token that is unlinkable to the awarded user ID.
+
+
+Network Protocol:
+    
+ BridgeSet credit update:
+
+ Bridge purchase:
+
+ Invite token purchase:
+
+ BridgeSet purchase:
+
+
+Remaining Issues:
+1. It is currently unclear where the client-side implementations of the crypto primatives we require should reside. Ideally Tor Launcher would be able to directly call out to native-code implementations of these primatives in NSS, but this will mean that headless clients would require an alternate implementation of these primatives. Another option would be to house these primatives in Tor itself and export them over the control port.
+2. The network interface between Tor Launcher and BridgeDB still needs to be specified. Bare HTTP Post? SOAP? Some other REST API?
+
+
+Unsolved Problems:
+1. Bootstrap/first bridge problem: How does Tor Launcher first connect to BridgeDB?
+2. Blocking reporting is an orthogonal and unsolved problem. Possibilities
+   include AS-level accounting of blocking reports in BridgeDB and XXX?
+3. Duplicate bridge handout problem: We still need some mechanism to prevent a blocked user
+   from getting a blocked bridge they have already received over and over again. The naive
+   option is to include the list of bridge IPs and ports already handed out in the BridgeSet 
+   descriptor, but this requires quite a bit of potentially invasive recordkeeping 
+   client-side, and exposes a lot of data to BridgeDB. Another alternative is to use some 
+   aspect of the BridgeSet descriptor to index into the hashrings, to make the repeated 
+   handout of the same sets of bridges unlikely (or impossible).
+
