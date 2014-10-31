@@ -1,0 +1,296 @@
+
+* Warning: This is a text dump of the Word File of the Tech Report on
+* Mimic Functions. I am only provided as a convenience. It is missing
+* figures. Write me for a complete copy or download "MimicTR.sit.hqx" 
+* to a Macintosh. There are also unprintable control characters. 
+
+
+
+
+Mimic Functions
+
+
+Peter Wayner
+Department of Computer Science
+Cornell University
+Ithaca, NY 14850
+wayner@cs.cornell.edu
+
+
+
+Abstract: A mimic function changes a file A so it assumes the statistical properties of another file B. That is, if p(t,A) is the probability of some substring t occuring in A, then a mimic function f, recodes A so that p(t,f(A)) approximates p(t,B) for all strings t of length less than some n. This paper describes the algorithm for computing mimic functions and compares the algorithm with its functional inverse, Huffman coding. It also provides a description of more robust mimic functions which can be defined using context-free grammars.
+
+
+
+
+In his short story, "The Purloined Letter", Edgar Allan Poe describes a search by the police for an incriminating letter. The police ransack the house and pry open anything that might be hiding it, but they cannot find it. They look for hidden compartments, poke in mattresses and search for secret hiding spaces with no success. The detective, C. Auguste Dupin, goes to the house and finds the letter hidden in a different envelope in plain sight. He says, "But the more I reflected upon the daring, dashing and discriminating ingenuity, ... the more satisfied I became that, to conceal this letter, the Minister had resorted to the comprehensive and sagacious expedient of not attempting to conceal it at all." 
+
+In many ways, the practical cryptographer faces the same problem. Messages need to get from one place to another without being read. A traditional cryptographer tries to guarantee the letter's security by sealing the message in a mathematical safe and shipping the safe. There is no attempt made to hide the fact that it is a letter at all. The cryptanalyst attacking the message may or may not be able to break the code, but he has little problem finding and identifying the carrier.
+
+Many of the histories written about the cryptography community, however contain stories of how the analysis of the message traffic alone lead to intelligence coups. Mimic functions hide the identity of a text by recoding a file so its statistical profile  approximates the statistical profile of another file.  They can convert any file to be statistically identical to, for instance, the contents of the USENET newsgroups like rec.humor or the classified section of the Sunday New York Times. Their contribution to security is largely founded upon the assumption that the explosion of information traffic makes it impossible for humans to read everything. Anyone watching must use computers outfitted with statistical profiles to weed the interesting data from the mundane.
+
+Mimic functions can be used independently of traditional encoding techniques. They can be used whether or not a message is encrypted and provide additional security. In fact, their effects can be combined with some forms of encryption to provide deception . The statistical composition of a file is also used extensively by classical cryptography. Many parts of the literature describe ways to identify the method of encryption by examining the distribution of the letters. Mono-alphabetic substitution ciphers have statistical profiles identical to the underlying language, while block diffusion ciphers like DES will produce nearly random distributions. Mimic functions can be used to convert a DES-encrypted file to appear like one encoded with a mono-alphabetic substitution.
+
+This paper has two major sections. The first one describes a mimic function based upon Huffman Coding, its dual Tunstall coding and the related Homophonic Ciphers. Both the mimic function and its inverse here produce languages equivalent to regular automatons. The algorithm is given along with a proof of its optimality that is based upon Huffman's result. The second part analyzes a method for construction of mimic functions based upon Context Free Grammars and parsers. The last section describes how the work can be extended to the domain of recursively enumerable sets. 
+
+Previous Work
+
+Simmons [10] opened up the investigation of ways to transfer hidden information and called this approach subliminal channels. The problem was stated as if two prisoners needed to pass information in the notes without the information being detected by the warden who routinely read their mail. The solutions to the problems use much of the work in public-key authentication to securely transfer the information. These methods, though, offer no way to conceal the fact that a message is actually there. They just make it harder for any adversary to find the message. It is, in a sense, dissolved into the message into a larger string. Seberry and Pieprzk presents a good discussion of the topic and several other approaches in their book. [11].
+
+Another related area is the work on Homophonic ciphers done in Switzerland by Ch. Gunther. [15],[16]. Previously many cryptographers had considered compression to be an ideal partner for encryption because it would remove much of the redundancy in the message. Homophonic ciphers generate output with a distribution which is substantially smoother than compression methods like Huffman coding at the expense of expanding the size of the message and not yielding as much compression.
+
+The discussion here was inspired, in part, by some of the work which has been done in the realm of popular computing. Scientific American and Byte published  articles on generating random but text statistically equivalent to the natural language sources. The authors noted even though the passages contained no meaning and in many cases consisted of nonsense words, the passages would "sound" like the original author. 
+
+
+Preliminary Definitions.
+
+An alphabet is a set of characters and a file is a string of characters from an alphabet.  We will be primarily concerned with files made up of either the numbers 0 and 1, or the files made up of the letters and punctuation in the English language.  In practice, the characters are always stored as fixed blocks of zeros or ones and the process of Huffman compression shrinks the lengths of files by assigning variable length blocks to the different characters. Each file will be presumed to be composed of characters from a predetermined alphabet.
+
+p(t,a,A) represents the probability that a character a follows a substring t in a file A, and p(nil,a,A) and p(t,nil,A) represents the independent probability that a or t occurs in A. Two files A and B are statistically equivalent within epsilon, if |p(t,nil,A)-p(t,nil,B)| < epsilon for all substrings t, of length less than n. The phrase first-order equivalence is used to describe the case when n=1, etc. The term digrams and trigrams are used to stand for substrings of length 2 or 3 and their probability. 
+
+
+Introduction to Compression.
+
+This section describes the Huffman coding  algorithm which will form the base of the class of regular mimic functions. The method is a classic and well-understood method of data compression described in [1], [2],[3] among others. Readers familiar with the algorithm can skip this section. The algorithm breaks a file into  fixed length blocks and encodes each possible block as a variable length block . The blocks which occur frequently are given short representations while the rare blocks are converted into long  strings. In the end, the resulting file of variable length blocks is usually shorter than the initial file of fixed length blocks.  The functional dual of Huffman coding is Tunstall coding which maps variable length blocks of the initial file into fixed length blocks of the compressed file. The same ratio of compression is achieved because the basic structure of the algorithm is essentially the same.
+
+These compression functions are interesting because they have two outputs: a compressed file and a statistical distribution of the characters in the file. Both of these are needed to reconstruct the compressed result. These Huffman compression functions will be represented as fA(B) which means f is a function which compresses B based upon the statistical distribution of characters in A. Compression programs usually output fA(A). The inverse of a Huffman function, f, is uniquely defined and will be represented as gA(B). If f is a Huffman compression function, then the inverse g will take a variable length block and produce a fixed length block. 
+
+The algorithm for constructing a Huffman compression function is straightforward:
+
+Given: A set of k characters,{c1... ck}, and their probabilities distribution p(nil,ci,A) in a file A.
+
+Algorithm: 
+
+Construct k nodes representing the k characters. Each node, na  ,corresponds to character ca and has a value, r(na), assigned to it which is equal to p(nil,ca,A).Think of this a forest of k one-node  trees.(i.e. one leaf, one root)
+
+Repeat until only one binary tree with n leaves is left.
+			Find the two trees na and nb with the smallest values of r. 
+			Join these two trees by creating a new node which has these two nodes 			as its descendents. 
+			Set the new treeÕs  r value to be r(na )+r(nb ).
+
+The Huffman function is constructed by labeling one of the two branches exiting every interior node of the tree with a 0 and the other branch with a 1. The function compresses a file by converting each character to the sequences of bits which define the path from the root to leaf which corresponds to that character. Figure 1 shows an example of a Huffman tree. In the example, 't' is converted into the bits '110.' 
+
+This compression method produces variable length blocks where the block for one characters is never a pre-fix of the block for another character. This guarantees that the compression function is one-to-one. Huffman showed in his original paper that the method also achieved the theoretical optimal compression for a data file. That is, there is no better way to assign variable-length blocks to the characters and produce a more efficient compression function. The proof can be summarized:
+
+Lemma: Huffman Encryption provides optimal compression.
+
+Proof: First, the compression function must be one-to-one. When the pre-fix principle holds, the system of variable length blocks for k characters can be thought of as a tree with k leaves. The problem then becomes finding the best tree and the tree constructed by the Huffman algorithm can be shown to be this tree. Begin with two nodes, ni  and  nj  in the tree constructed by the Huffman algorithm subject to the constraint that ni  is on a lower level of the tree than nj.The tree is constructed by ensuring that r(ni)<r(nj) whenever ni is on a lower level of the tree than nj. If nj was not an ancestor of ni then the two nodes could be interchanged. In this case, the length of the of the blocks of bits assigned to all the characters descended from nj would increase and those on ni would decrease. But the descendents of ni  are less likely to occur because of the construction of the tree. Therefore the average length of the compression will be lengthened. Therefore, there is no better arrangement of the nodes in the tree.
+
+
+Regular Mimic Functions
+
+The inverse of the Huffman compression functions can serve as mimic functions if it receives a stream of randomly distributed bits. That is, gB(fA (A)) is a first order  mimic function that converts A into output which approximately mimics the first-order statistical profile of a file B. The first part of this composition, fA, will be referred to as the compression phase and the second part, gB, will be referred to as the expansion phase. The fact that the compression functions are one-to-one ensures that these inverses are the optimal mimic functions that can be constructed. This statement can be summarized in these lemmas:
+
+Lemma: If fA() is an optimal Huffman compression function for file A, B is a file of random bits,  and lf(c) is a function which returns the number of bits in the variable length block assigned to a block of bits c by f, then c will occur in gA(B) with probability of 2-lf(c). 
+
+Proof: Inverting f can be thought of as starting off at the root and then following the path down the tree dictated by the bits. In this case, the bits are assumed to be independent, so a random choice is made at each branch. If there are lf(c)bits in the variable length block assigned to a, then there are lf(c) branches between the root and the character and the character c will occur with probability 2-lf(c).
+
+The statistical distribution of characters in the alphabet will always be negative powers of two. It would be much better if the mimic functions were able to produce files where the characters appeared with a better range of probabilities. Unfortunately, this is the best which can be done if the functions are required to be one-to-one. A later section will discuss the result of one way that the one-to-one requirement can be relaxed. The same technique which proves the optimality of a Huffman function can be used to show the optimality.
+
+Lemma: If fA() is a theoretically optimal Huffman compression function for file A and B is file created by repeatedly querying a perfect random bit generator, then gA(B) is the best  first-order approximation of the statistical profile of A which is one-to-one.  
+
+Proof: If A is based on an alphabet with k characters, then the set of one-to-one functions which map the alphabet to variable length blocks of bits is isomorphic to the set of binary trees with k leaves and ordered branches. This follows directly from technique of labeling the branches with either 0 or 1 used to construct the Huffman functions. Given ni and nj which are two nodes in the tree that are not ancestors of each other and ni is on a lower level than nj. If ni and nj are exchanged, then the descendents of ni occur more often in the output of gA(B) because the distance between the root and the characters is now shorter. However, the construction of the Huffman tree must have placed ni on a lower level because it occurred less frequently. Therefore |p(nil,ci,A) - 2-lf(cj)| > |p(nil,ci,A) - 2-lf(ci)| and |p(nil,cj,A) - 2-lf(ci)| > |p(nil,cj,A) - 2-lf(cj)|. Therefore the tree constructed by the Huffman algorithm also produces the best mimic function. 
+
+
+
+Nth-order Mimic Functions.
+
+The last section described a first-order solution, but often solutions which mimic the n-th order statistics (called n-th order mimic functions) are more appropriate because they are better approximations. The first-order definition can be extended to handle n-th order solutions in two ways: first by considering blocks of n characters to be one character in a new and greatly expanded alphabet and second by using a sliding window of n characters to determine the statistics.  These techniques can be useful in cases when the number of characters are low and their probability is not close to a negative power of two. 
+
+For instance, if three characters {a,b,c} occur in a file with corresponding probability {.85, .1,.05}, the Huffman encoding might assign to them the compressed blocks {0,10,11}. If the inverse of this function is used in a mimic function, then the characters will appear in the mimic functions output with probabilities: {.5,.25,.25} -- a substantial difference. Files composed from a small alphabet will share this property. This problem arises because the regular model forces all characters to have a probability which is a negative power of two. Moreover, this power is really the length of the distance between the root and the leaf. If there are many characters then the range of depths in the tree will be much larger and the approximations will be more accurate.
+
+One potential solution is to consider the alphabet to be all blocks of n characters. In this example with n set to 2, the alphabet becomes {aa,ab,ac,ba,bb,bc,ca,cb,cc}. Obviously, increasing n will increase the size of the Huffman tree exponentially. The better distribution of values, though makes this desirables long as the new tree will not overflow memory. 
+
+This technique, though, does not produce the best results because the n characters in one block do not overlap with the next block and the inter-character dependencies are not insignificant. For instance, the letter "e" often comes after the letters "th" in English. Mapping blocks of n characters into a new alphabet does not accurately capture this because the location of the "the" in the block of characters depends strictly upon the distance from the beginning of the file. 
+
+The next technique captures the inter-character despondencies by constructing a Huffman function for each string t of length n-1 to encode the probabilities of the characters which follow t. A Huffman function, fA(t), can be constructed from the set of these probabilities p(t,a,A) for all characters a which may follow t in the file A. An n-th order mimic function can be constructed from the collection of these functions by using gA(t) to choose the character that will follow a substring t. The function must be seeded by selecting one possible t at random from the file A. 
+
+Figure 2 shows the results from using third, fourth and fifth order mimic functions. Notice that the text becomes more and more recognizable as standard English. It even becomes to resemble the style of the author. 
+
+Homophonic Ciphers and other Compression Algorithms.
+
+In this last section, a mimic function was defined to be gB(fA (A)) where both gB and fA are compression functions constructed using Huffman's algorithm. Better mimic functions can be constructed using better compression functions. Huffman coding  is perfect (i.e. p('1',nil,fA(A)) = p('0',nil,fA(A)) = .5 )if and only if the p(a,nil,A) is a negative power of two for all possible characters, a, in A. When this fact does not hold Huffman coding produces a very short, average length encoding for a particular message but it does not provide the most even distribution in the final file.  In many cases, better compression can be achieved by using other compression schemes using dictionaries or run-length encoding. In the cases where this may be true, they can be substituted for the use of fA. 
+
+It is not possible, though, to satisfactorily invert dictionary based compression schemes like the Lempel-Ziv, and use this inverse for the second half of the mimic function, gB. The dictionary schemes rely upon transmitting blocks of uncompressed text and then keeping track of them in a dictionary table. When the compression algorithm encounters a block that is a repeat, it transmits the dictionary table location instead of the entire block. Compression is achieved because the number of bits in a dictionary table location is less than the size of the block. The dictionary entries are not pre-determined and when de-compression begins, the algorithm learns the table entries as they are encountered in the file for the first time. For this reason, a random file will generate random table entries which will then make up the structure of gB. This will not bear any resemblance to B because there is no pre-determined usage of B by the algorithm.
+
+Homophonic ciphers are an idea introduced by C.G. Gunther in [15] and further discussed by H.N. Jendel, Y.J.B. Kuhn and J.L. Massey in [16]. The solution is to map each character a in a file into not just one variable length bit-string, but into several. If this is done correctly, the result is a much smoother distribution. In some cases, some compression may be achieved, but in many cases the file is actually expanded. Homophonic ciphers make an excellent substitution for fA if size is not a critical problem. Their inverse, though, cannot be used in a composition because it is not invertible. This next section on One-to-Many functions will describe an approach which is similar to homophonic functions with the distinction that it is invertible. 
+
+One-to-Many Functions
+ 
+The previous sections derived mimic functions that were one-to-one. This lead to the result that the best functions would produce characters with probabilities which were negative powers of two. It is possible to modify the algorithm to produce more accurate approximations by removing the constraint that the functions are one-to-one. The efficiency of information transfer, though, is reduced. 
+
+The functions from the previous section are modified to be one-to-many by attaching more than one character to each leaf. Figure 3 shows one of these trees. Each of the characters in the leaf is represented by the same sequence of bits which define the address from the root to the leaf. When a file is encoded with a mimic function, the bits from the file selects a leaf and then a random number generator selects one of the characters in the leaf. The random number generator can use as many bits as possible to approximate the statistical distribution of the characters in the set with an arbitrary precision. 
+
+This fact also shows some insight into the previous result. When there are only two characters in the alphabet, only one bit of information can be carried per character. If this reasoning is extended, the distribution must be a power of two when the function must be invertible. The random number generator here generates noise which is not recoverable. This technique is limited, however, because even one-to-many functions cannot generate characters which occur with a probability greater than 50%. 
+
+The algorithm for constructing the tree to be used in one-to-many functions must avoid a NP-complete problem. In the simplest case, when the tree has only two leaves, the problem is to divide the set of characters into two sets so the total probability of each set is as close as possible to .500. This is an instance of the knapsack problem which is one of the better known NP-complete problems. [8] The literature, though, is filled with many polynomial algorithms which will produce approximate answers to the knapsack. Sahni [9] wrote one of the first treatments.  The algorithm for constructing a Huffman tree will also produce a reasonable approximation of optimal if the tree branches are cropped and the letters in the truncated leaves are aggregated into one node. This procedure can be done whenever the approximation assigned by the tree is unsatisfactory. 
+
+These one-to-many functions act similarly to homophonic ciphers [15],[16] with one important difference. They are uniquely invertible. Although, one stream of bits may map to one of several characters, each of these characters can only be generated with one, unique stream of bits. A homophonic cipher will convert one block of bits into one of several different blocks of bits. For instance, an 'd' in the input file may randomly transformed into either '1101','111' or '1001'. While it is possible to invert this function for deciphering, the inverse cannot be used in a mimic function because the inverse isn't invertible.
+
+Compression and Encryption
+
+For the most part, the techniques described here are useful for hiding information, but not keeping it secure once the adversary discovers its true identity. The algorithms for Huffman encryption can be strengthened in a simple way. In an earlier paper [6], I describe a way to modify the Huffman compression routine to provide simultaneous encryption. The method simply scrambles the addresses on the tree after each character is compressed. The strength relies heavily upon the strength of the random number generator which is used to select the random numbers which scramble the tree. The original construction of the tree and the seed to the random number generator are the key to this encryption.
+
+Figure 4 shows the tree from Figure 1 after scrambling. The scrambling is accomplished by randomly permuting the characters on each level of the tree. A simple method is to treat the addresses as bits in a non-linear feedback register which is updated after each character is compressed. Note that if the address on the branch on the same level are changed in unison, then the scrambling is equivalent to xoring the compressed file with a random bit-stream. On the other hand, if the addresses of the nodes on the same level are scrambled independently, then the effects of the scrambling are different for each letter. 
+
+
+Context-Free Grammars
+
+The mimic functions described in the first part of this paper treat files as random processes which are defined by their statistical profiles. The several examples show that this simple model can often provide striking mimicry. The English language has a high-level of redundancy and the nebulous quantity of "style" seems to have a statistical component. The results of these regular mimic functions may fool attacks based upon statistical analysis, but they will not stand up to any analysis which understands structure. The output has a feel that may be ÒDickensianÓ or ÒEnglishyÓ but even the most superficial reading shows that they are neither. For instance, the regular mimic functions could be used to hide a message with the statistical profile of a C program, but a compiler would immediately recognize the error when it tried to execute the file. This next section presents an algorithm for using Context-Free Grammars to mimic files.
+
+The abstraction of a context-free grammar is a part of both computer science and linguistic theory. One of the canonical forms of the grammars is named after Noam Chomsky, a linguist who used it to model the structure of language. Computer scientists have used the abstraction to describe high-level computer languages and have developed a rich theory and algorithms to understand these languages. For these historical reasons, context-free grammars suggest that context-free grammars can make ideal abstractions for more complex mimic functions.
+
+A Context-Free Grammar (CFG)  is made up of a set of symbols and a set of productions. The symbol set is divided into terminal symbols and variable symbols. One of the  variable symbols is designated as the start symbol. The productions convert a variable symbol into a sequence of terminal and variable symbols. A string of terminal symbols is said to be generated  by the grammar if a sequence of production rules can convert the start symbol into the string. A grammar is said to be unambiguous if there is only one unique way that every string can be generated. Figure 5a and 5b shows a typical grammar and several strings which can be produced by it.
+
+The process of discovering the set of production rules which generated a string is known as parsing, and the study of the algorithms for accomplishing this task is a rich branch of computer science. These algorithms produce parse tree which summarize the string of productions in a tree. The interior nodes of the parse tree are variable symbols which were part of the derivation. The leaves are the final terminal symbols. This paper will not examine the details of the many possible algorithms that can be used to convert a string of symbols into a parse-tree, because books like [4] do an excellent job of covering the broad field. Some types of CFG's are easier to parse than others and simple ones can be parsed in an amount of time which is linearly proportional to the number of terminal symbols. These parse trees can be broken up into the series of production rules which generated the string of symbols by a search procedure that begins at the root and stops at all nodes in a pre-determined order. 
+
+Mimic functions based upon unambiguous context-free grammars can be built by using expansion parts that generate CFG productions which consequentially generate strings of symbols. Inverting these mimic functions requires parsing algorithms to break the the symbols into the lists of CFG productions which can then be converted into bits.  The weights are probabilities that govern the selection of productions. In this case, the sequence of productions which lead to the terminal symbols carry the message, not the symbols themselves. The bits of the message are hidden in the structure. The steps can be summarized as:
+
+
+1) Given a set of productions from an unambiguous CFG, assign a probability to each possible choice. This could either be through experimental analysis or fiat. 
+
+2) Decide upon the parsing conventions for ordering the generation of the string and the parse tree. For instance, a left-most derivation of a string from a grammar always applies the production rule to the left-most variable symbol first. In this case, assigning the same ordering to a parse tree can be done by using depth-first search which always follows the left-most, unvisited branch of the parse tree. 
+
+3) Use the Huffman tree construction algorithm to create a one-to-one mapping between binary strings and the productions. 
+		i) Given a CFG with variable symbols {S1,S2,... Sn}, let Bi = {Bi,1, Bi,2,... Bi,m} be the productions associated which each variable symbol Si. Each of these productions occurs with a probability decided in one. 
+		ii) Construct the expansion parts of a mimic function, gB1, gB2 ... gBn using these probabilities and the algorithms described in the earlier sections. That is, construct functions that take a stream of bits and return a production instead of a character. 
+		iii) When a particular variable, Si,  is going to be converted to terminal symbols in a production, use the appropriate expansion function gBi to choose the production based on the bits of the input file. 
+
+4) The Encoding function will use the tree from (3) to convert the bits from the input file into a list of productions which derive strings. 
+
+5) The decoding function parses strings, orders the productions in the parse tree based upon the rules in (2) and uses the trees in (3) to convert these into bits. 
+
+6) Extra random bits are added to the end of the message to make sure that enough to fully reduce all variables to terminals.
+
+This process is illustrated in Figures 5c and 5d. The context-free grammar mimic functions were originally intended to generate files that would mimic programs written in languages like C or Pascal. A clever hack by Bard Bloom and Vicky Borah showed that a context-free grammar can be used to generate half-sensible English text. [7] Their program (or to be more exact, set of productions) is the latest version of a much modified program in the Gnuemacs community. The original author is unknown. The figure [5] shows the result of using his context-free grammar to hide a string of bits as a set of random insults of the sort traded in the Internet newsgroups. 
+
+These CFG mimic functions can be combined with the regular mimic functions by adding flexible terminal symbols. Programming languages like Lisp, for instance, define variable names to be anything separated by spaces. These could be generated and decoded with a regular mimic function. 
+
+If CFG's derived from programming languages are used, one limitation is that the results will only partially compile. Parsing languages like Pascal is just the beginning of the compilation process and later steps like type-checking can still reveal inconsistencies. Many  compilers will check for errors like undefined variables. Simpler languages aren't as demanding and recognizing real code from a mimic function is more difficult. A more rigorous system like the one below can be used. 
+
+Recursively Enumerable Languages with Two-Level Grammars
+
+The Context-Free grammars allow a reasonable facsimile of English language text to be created. Obviously, though, the power of these functions is limited by fundamental constraints. The context-free grammars means that the words cannot be related to their neighbor except in fixed ways. This is because the productions are chosen at random. If there was some structure to the productions, then the resulting output would have even more structure. van Wijngaarden explored using a meta-CFG to guide the productions of a CFG in the language description of Algol-68. [12] Sintzoff later showed that the two-level grammars could generate every recursively enumerable set. [13] [14]
+The structure from the previous section can be easily modified to use these grammars. The bits of the file specify the productions of the meta-grammar which in turn decides the productions of the second grammar. Actually parsing arbitrary two-level grammars that correspond to arbitrary r.e. languages, though, can be arbitrarily difficult. The class of NP-complete sets is certainly recursively enumerable, and these are just at the base of the hierarchy of recursively enumerable sets. For this reason, I don't recommend using r.e. mimic functions unless you are careful to ensure that the parsing can be accomplished in a reasonable amount of time.
+
+Conclusions
+
+Assessing the security of this technique is relatively difficult because there are no standard methods of analysis. The sole measure of its success is its ability to avoid detection. The regular mimic functions will appear as recognizable gibberish to a human, but the mimic functions based upon context-free grammars can produce output which is quite readable and legible. Automated scanning programs which rely upon statistical will be fooled by the regular mimic functions and humans may even be fooled by clever, Context-Free Grammars.
+
+The one principle weakness that I can anticipate is the fact that the characters in the output of the regular mimic functions will always occur with a probability which is a negative power of two. A message which has this statistical profile would be suspect. The best defense against this is using n-th order regular mimic functions with a large enough n to ensure that accurate statistics could not be gathered. This is a relatively easy task because the number of characters needed to get an accurate result increases exponentially with the value of n. One-to-many functions will also help combat this attack.
+
+There are many other types of mimic functions which can be created. Different compression functions can be modified to be used.  This technique can be used to hide information in the headers of mail messages, in huge data banks, in the noise which travels in the newsgroups or just the low-level static which is everywhere. 
+
+Acknowledgements
+
+The author would like to thank Barry Hayes for his generous comments and the suggestion to extend the work to two-level-grammers. 
+
+
+[1] Huffman, D. "A Method for the Construction of Minimum Redundancy Codes. Procedings of the Institute of Radio Engineers. 40. pg 1098-1101.
+
+[2] Storer, James Data Compression, Computer Science Press, Rockville, Md, 1988.
+
+[3] McEliece, R. The Theory of Information and Coding. Addison-Wesley, Reading Massachusetts. 1977.
+
+[4] Aho, Alfred, Ravi Sethi and Jeffrey Ullman. Compilers: Principles, Techniques and Tools. Addison-Wesley Publishing, Reading MA, 1986.
+
+[5] Hopcroft, John and Jeffrey Ullman. Introduction to Automata Theory, Languages and Computation. Addison-Wesley, Reading Massachussetts, 1979.
+
+[6] Wayner, Peter "A Redundancy Reducing Cipher." Cryptologia , April 1988. Volume 12: number 2. Page 107-112.
+
+[7] Bloom, Bard. Private Communications. Cornell University.
+
+[8] Garey, Michael and David Johnson. Computer and Intractability: A guide to the Theory of NP-Completeness. W. H. Freeman and Company. New York, 1979.
+
+[9] Sahni, S. "Approximate algorithms for the 0/1 knapsack problem." J. Assoc. Computer Machinery. 22, pp. 115-124. 
+
+[10] Simmons, G. J. "The Prisoner's Problem and the Subliminal Channel" Advances in Cryptology: Proceedings of Crypto 83. (Editor: D. Chaum), Plenum, New York, 1984, pp. 51-67.
+
+[11] Seberry, Jennifer, and Joseph Pieprzk Cryptography: An Introduction to Computer Security. Prentice Hall, New York, 1989. 
+
+[12] van Wijngaarden, A. et al. Report on the Algorithmic Language ALGOL-68, Num. Math., Vol. 14, pp 79-218, 1969.
+
+[13] Sintzoff, M. "Existence of a Van Wijngaarden syntax for every recursively enumerable set," Extr. Ann. Soc. Sci. Bruxelles, T 81, pp 115-118, 1967.
+
+[14] van Wijngaarden, A. "The Generative Power of Two-Level Grammars." Procedings of Automata, Languages and Programming, 2nd Colloquium, University of Saarbrucken, July 29-August 2, 1974. Reprinted in the "Lecture Notes in Computer Science" series edited by G. Goos and J. Hartmanis. Number 14. 
+
+[15] Gunther, C.G. " A universal Algorithm for Homophonic Coding," Advances in Cryptology- Eurocrypt '88, Lecture Notes in Computer Science, volume 330, pp. 405-414, Springer-Verlag (1988). 
+
+[16] Jendal, H.N., Y.J.B. Kuhn and J.L. Massey, "An Information-Theoretic Treatment of Homophonic Substitution,"Advances in Cryptology- Eurocrypt '89, Lecture Notes in Computer Science, to appear.
+
+
+
+
+Figures 
+
+
+Figure 1: A Huffman Tree built for the set of characters, {e,t,a,s,i,l,r} with respective probabilities {.30, .25, .15, .13, .12, .08, .7}. The zeros and the ones at the branches are used to find the address of a character. 'A' for instance, has the address '011.'
+
+
+
+Order 3 text:
+
+Mimic function of character and Compresentextendent-extraditory. The are on . The ther his possible inforcest the parse tree generated. This define method partible. These authough eith a fore alle, it text-free is related he converted searlies.}{Figure noded the task by up the tree, that undefined the of Huffman exper accur withough, instribest of rance,[10] Sahniquely is f is to there mation of the get is figure will repen the equencident composion of one tree a miming an because charaction function cannell. A classage, na  ,corress of matree can for feed fix of nj.This in a file one can compressages these used. Notical descendent varized which who examplies of a lon, but to messemblings to bits string-- the lowere 4: Anyonential if the Introduction. The outing. Simpossionstrafficienceal 
+
+Order 4 text:
+Mimic function. The fact also process. W. H. Free the tree the mimic function dering of coversion which has on to breaks a tree and Computer that is and recognize the no attacks of productional discussion of a search by labeling of coverse, the precision to get from and Intracter solutions to modified to principlest version f, is a files structure the literate a string dependentical provide the compression.This needed to lead to the tree...} {Figure 1 after is to terminally exponentity which can because assigning Context Free computer that than nj. If the practers their provide information. The scrambled to the choose the provide size with a 1. The statistical grammar is letter. These Huffman compression to statistical of variable, 't' is updated.  This said to branches in the alphabet to the characters into ther hack provides from technique of the previous encryptographers can be useful follow a strength order 
+
+Order 5 text:
+
+Mimic function of as statistically equivalence of n characters into  fixed less that cannot generates these Huffman tree is now shorter. Figure 5: A scrambling it, but the new tree with provide deception of produces that a context-free grammars can be broad field. This next statistical analysis, but a contribution of two node, na  ,corresponding function of characters. 3) Decide upon the branches with corresponds themselves. The practice, though the method is to be unambiguous if the described here the Huffman compression is could immediately captures the blocks is no better. Therefore |p(nil,ci,A) - 2-lf(c).The strings of the 0/1 knapsack probabilities p(t,A) in a mathematically optimality {.85, .1,.05}, the compression function of the average length less thank Barry the trees in one-node  tree and punctuation. They computer way to mimic function of characters which is a rich branch of compression for each characters and the concerned with statistical analyst 
+
+
+
+Order 6 text: 
+
+Mimic Functions will productions can be used extend the inverse, Huffman encoded with probabilities that a characters in one-to-many functions by removing the value to be anything. Anyone watching must be seeded by repeatedly querying a Huffman compressed blocks which define the functions convert the root and the character dependent, so a random bits,  and the work which always follow t. A Huffman coding technique can be built by using Context Free Grammar can be useful in cases construction procedure that they will be based upon the characters can be done in the mimic function based upon Huffman compresses as bits in a tree. 
+
+Figure 2: Four samples of regular mimic functions computed from statistics gathered from the text of this paper. The four samples are produced with orders 3,4,5 and 6. The first word, "Mimic" was used as a seed. The typesetting cues were removed.
+
+
+
+
+Figure 3: A One-To-Many Huffman tree created by truncating the branches of the tree. All of the letters in the same leaf have the same address and are selected at random when the address is to be encoded with the mimic function. For instance '10' maps to 'a', 'b' or 'c'.
+
+
+
+
+Figure 4: The tree from figure 1 with the addresses of some of the branches scrambled. The character 'a' now has the encoding, '001'. A random number generator controls the addresses of each of the branches. 
+
+
+S --->  AB | BA
+A ---> Aaa | AA | Aab  | ab
+B ---> Bbb  | BA  | Bba  | ba
+
+Figure 5a: A context-free grammar with the terminal symbols {a,b} and the variable symbols {S,A,B}. The variable symbol 'S' is the start symbol from which all strings in the language are derived. The grammar is unambiguous because each string can only be produced by one set of productions. 
+
+S ---> AB ---> AaaB ---> AabaaB ---> ababaaB ---> ababaaBbb ----> ababaababb
+
+ Figure 5b: The derivation of a string 'abbaaababb' from the start symbol. Some other possible strings which can be derived from this grammar are: "abba", "babbab" and "babbabaaaa". This derivation was produced using a left-first rule. When parsing is completed, the order of the derivations, also called productions, can be determined uniquely if the grammar is unambiguous.
+
+S ---> 	AB | AC | DC | DB
+A --->	 "Good Golly," (.25) | "Whoa," (.25) | "Wow," (.25) | "Zounds," (.25)
+B ---> 	"loving " E (.5) | "a winter's night" E (.25) | "friendship" E(.125) |
+	 	"snuggling " E(.125) 
+C ---> 	"panthers " F (.25) | "pterodactyls" F (.25) | "Gila monsters" F (.25) | 
+		"serpents" F (.25) 
+D ---> 	"Hmmm" (.5) | "Well," (.25) | "I'm not sure about that, but" (.25)
+E ---> 	" is better than no hair at all." (.25) | "is a word for kittens" (.25) |
+		" is better than pickles for lunch." (.25) | "shouldn't be overestimated."
+		(.25)
+F ---> 	"shouldn't be left unattended with kittens" (.25) | 
+		"aren't such bad pets in the scheme of things." (.5) |
+		"are the meanest part of an end." (.25)
+Figure 5c: A context-free grammar with probabilities placed next to each production. These are all negative powers of two, in this case, so the complications of many-one functions can be avoided. 
+
+
+
+Figure 5d: The tree that describes the gB for the production of the B variable. 
+
+Only an UFO buff like you would want to have fun with Buster Keaton. You know that Sigmund Freud was Eva Peron's granola supplier in a previous life.  Glucose Chips! So ripe that it's the eighth wonder of the world!  Gonzo Q! So expensive that it's the eighth wonder of the world!  Yo! Burt Reynolds would be Best Actor of the Year if he hadn't evenly got hair all over Dwight Eisenhower.  How can you rob Cortez so disappointedly? Having a part-time lover makes you more cannibal prosimian.  Wheaty! So nasty that it's the eighth wonder of the world!   Have a Lipash-brand hat for your pteranodon!  Bless my virtue! Eat tripe -- the moth intestines of the earth!  Bless my stomach!  You're Scotch, my little father.  Bozhe moi, your power ties are really amusingly freaky.
+Frobo brand grape soda is flamboyant and crisp!  Roger Bacon is into Scientology.  Sugar Pimples, for the people who can't get enough sugar! Possibly L Ron Hubbard and Paul Cezanne get paid a whole lot, but all they ever do is artfully write protest letters to Congress.  C'mon, gimme the spiritual renewal.  
+
+Figure 6: The text output from Bard Bloom and Vicky Borah's Meta-x Flame Context-Free Grammar which has been converted into a mimic function. 
+Peter Wayner -- Mimic Functions	¥	Page 																
+
+* Figures Deleted here *
