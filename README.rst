@@ -14,5 +14,16 @@ With probability negligibly < 1, I will *not take pull requests* for this
 repository.  However, reading suggestions are welcome, particularly when they
 come with some explanation as to the relevance or worth of the material.
 
+------------------------------------------------
+ Anonymity, Privacy, & Censorship Circumvention
+------------------------------------------------
+
 For further resources in anonymity and privacy, see also `Freehaven's AnonBib
 <http://theiff.org/current/wp-content/uploads/2016/03/WertheimM_MathematicalSnark_Cabinet_34_2009-copy.pdf>`__.
+
+------------------------------------------------
+ Quantum Programming Languages
+------------------------------------------------
+
+For further resources, see also Professor Simon Gay's `Bibliography on Quantum
+Programming Languages <http://www.dcs.gla.ac.uk/~simon/quantum/>`__.
