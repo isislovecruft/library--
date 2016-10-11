@@ -21,6 +21,10 @@ come with some explanation as to the relevance or worth of the material.
 For further resources in anonymity and privacy, see also `Freehaven's AnonBib
 <http://theiff.org/current/wp-content/uploads/2016/03/WertheimM_MathematicalSnark_Cabinet_34_2009-copy.pdf>`__.
 
+For resources on online censorship and censorship circumvention, see Philipp
+Winter's `CensorBib <https://censorbib.nymity.ch/>`__ (also `on Github
+<https://github.com/NullHypothesis/censorbib>`__).
+
 ------------------------------------------------
  Quantum Programming Languages
 ------------------------------------------------
