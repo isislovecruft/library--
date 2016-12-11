@@ -1,0 +1,9 @@
+*~
+\#*
+*.swp
+
+# Qubes DVM lockfiles:
+
+*.pdf.[A-Za-z]{6}
+
+physics/Feynman\ Lectures\ on\ Physics\ Volumes\ 1\,2\,3\ -\ Feynman\,\ Leighton\ and\ Sands.pdf
