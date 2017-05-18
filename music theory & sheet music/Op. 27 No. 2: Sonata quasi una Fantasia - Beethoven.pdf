@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en-US"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en-US"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en-US"> <!--<![endif]-->
+<head>
+<title>安全检查! | 百度云加速</title>
+<meta charset="UTF-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<link rel="stylesheet" id="yjs_styles-css" href="/cdn-cgi/styles/baidu.errors.css" type="text/css" media="screen,projection" />
+<!--[if lt IE 9]><link rel="stylesheet" id='yjs_styles-ie-css' href="/cdn-cgi/styles/baidu.errors.ie.css" type="text/css" media="screen,projection" /><![endif]-->
+<style type="text/css">body{margin:0;padding:0}</style>
+<!--[if lte IE 9]><script type="text/javascript" src="/cdn-cgi/scripts/jquery.min.js"></script><![endif]-->
+<!--[if gte IE 10]><!--><script type="text/javascript" src="/cdn-cgi/scripts/zepto.min.js"></script><!--<![endif]-->
+<script type="text/javascript" src="/cdn-cgi/scripts/baidu.common.js"></script>
+
+
+</head>
+<body>
+  <div id="yjs-wrapper">
+    <div class="yjs-alert yjs-alert-error yjs-cookie-error" id="cookie-alert" data-translate="enable_cookies">请打开cookies。</div>
+    <div id="yjs-error-details" class="yjs-error-details-wrapper">
+      <div class="yjs-wrapper yjs-header yjs-error-overview">
+        <h1 data-translate="challenge_headline">只差一步</h1>
+        <h2 class="yjs-subheadline"><span data-translate="complete_sec_check">输入验证码，可以浏览</span> ks.petruccimusiclibrary.org</h2>
+      </div><!-- /.header -->
+
+      <div class="yjs-section yjs-highlight yjs-captcha-container">
+        <div class="yjs-wrapper">
+          <div class="yjs-columns two">
+            <div class="yjs-column">
+              <div class="yjs-highlight-inverse yjs-form-stacked">
+                <form class="challenge-form" id="challenge-form" action="/cdn-cgi/l/chk_captcha" method="get">
+  <script type="text/javascript" src="/cdn-cgi/scripts/baidu.challenge.js" data-type="normal"  data-ray="360aab94621d1207" async></script>
+  <noscript id="yjs-captcha-bookmark" class="yjs-captcha-info">
+    <p>访问本页面,您的浏览器需要支持JavaScript</p>
+  </noscript>
+</form>
+
+              </div>
+            </div>
+
+            <div class="yjs-column">
+              <div class="yjs-screenshot-container">
+              
+                <span class="yjs-no-screenshot"></span>
+              
+              </div>
+            </div>
+          </div><!-- /.columns -->
+        </div>
+      </div><!-- /.captcha-container -->
+
+      <div class="yjs-section yjs-wrapper">
+        <div class="yjs-columns two">
+          <div class="yjs-column">
+            <h2 data-translate="why_captcha_headline">为什么需要输入验证码?</h2>
+
+            <p data-translate="why_captcha_detail">输入验证码证明您不是机器人，输入后可以暂时浏览网站。</p>
+          </div>
+
+          <div class="yjs-column">
+            <h2 data-translate="resolve_captcha_headline">如何避免？</h2>
+
+            <p data-translate="resolve_captcha_antivirus">如果您使用私人电脑，可以下载杀毒软件，进行全盘扫描保证没有中毒。</p>
+
+            <p data-translate="resolve_captcha_network">如果您使用公用电脑，可以请网络管理员修正配置选项或查找病毒来源。</p>
+          </div>
+        </div>
+      </div><!-- /.section -->
+
+      <div class="yjs-error-footer yjs-wrapper">
+  <p>
+    <span class="yjs-footer-item">云加速 Event ID: <strong>360aab94621d1207</strong></span>
+    <span class="yjs-footer-separator">&bull;</span>
+    <span class="yjs-footer-item"><span data-translate="your_ip">你的IP</span>: 65.19.167.131</span>
+    <span class="yjs-footer-separator">&bull;</span>
+    <span class="yjs-footer-item"><a data-orig-proto="http" data-orig-ref="anquan.baidu.com/bbs/forum.php?mod=viewthread&tid=371363&page=1&extra=" id="support_link" data-translate="help" target="_blank">帮助中心</a></span>
+    <span class="yjs-footer-separator">&bull;</span>
+    <span class="yjs-footer-item"><span data-translate="performance_security_by"></span> <a data-orig-proto="http" data-orig-ref="su.baidu.com" id="yunjiasu_link" target="_blank">百度云加速</a></span>
+  </p>
+</div><!-- /.error-footer -->
+
+
+    </div><!-- /#yjs-error-details -->
+  </div><!-- /#yjs-wrapper -->
+
+  <script type="text/javascript">
+  window._yjs_translation = {};
+  
+  
+</script>
+
+</body>
+</html>
