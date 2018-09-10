@@ -3,7 +3,12 @@
 *.swp
 
 # Qubes DVM lockfiles:
+*.pdf.*
+!*.pdf.xz
+!*.pdf.tar
+!*.pdf.zip
 
-*.pdf.[A-Za-z]{6}
-
+# Things I've been asked not to make publicly available:
+computer science theory/exploit development/Hacking: The Art of Exploitation (2nd ed. 2008) - Erickson.pdf
 physics/Feynman\ Lectures\ on\ Physics\ Volumes\ 1\,2\,3\ -\ Feynman\,\ Leighton\ and\ Sands.pdf
+private/
